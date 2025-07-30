@@ -3,25 +3,25 @@ const { StatusCodes } = require('http-status-codes');
 const { UserRepository } = require('../repositories');
 const AppError = require('../utils/errors/app-error');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'MUKU';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const AuthMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new AppError('Access token required', StatusCodes.UNAUTHORIZED);
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     if (!token) {
       throw new AppError('Access token required', StatusCodes.UNAUTHORIZED);
     }
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
     // Check if user exists
     const user = await UserRepository.get(decoded.id);
     if (!user) {
@@ -41,7 +41,7 @@ const AuthMiddleware = async (req, res, next) => {
         message: 'Invalid token'
       });
     }
-    
+
     if (error.name === 'TokenExpiredError') {
       return res.status(StatusCodes.UNAUTHORIZED).json({
         message: 'Token expired'
